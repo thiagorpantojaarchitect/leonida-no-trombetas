@@ -4,7 +4,7 @@
 source "$(dirname "$0")/comum.sh"; conferir_conta
 for d in "$@"; do
   tld="${d#*.}"
-  disp="$(aws route53domains check-domain-availability --region us-east-1 --domain-name "$d" --query Availability --output text 2>&1)"
-  preco="$(aws route53domains list-prices --region us-east-1 --tld "$tld" --query 'Prices[0].[RegistrationPrice.Price,RenewalPrice.Price,RegistrationPrice.Currency]' --output text 2>&1)"
+  disp="$(aws route53domains check-domain-availability --region us-east-1 --domain-name "$d" --query Availability --output text 2>&1 | tail -1 || true)"
+  preco="$(aws route53domains list-prices --region us-east-1 --tld "$tld" --query 'Prices[0].[RegistrationPrice.Price,RenewalPrice.Price,RegistrationPrice.Currency]' --output text 2>&1 | tail -1 || true)"
   echo "$d · $disp · registro/renovação/moeda por ano: $preco"
 done
