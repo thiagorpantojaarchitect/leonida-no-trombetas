@@ -714,7 +714,7 @@ function telaCadastro() {
   $('cad').addEventListener('submit', ev => { ev.preventDefault(); const er = PF.validar($('cNome').value, $('cSobre').value, t.value, $('cOk').checked); $('cErro').textContent = er; if (er) return; PF.criar($('cNome').value, $('cSobre').value, t.value); telaCadastro(); });
   for (const id of ['cNome', 'cSobre', 'cTel']) $(id).addEventListener('keydown', ev => ev.stopPropagation());
   telaCadastro(); }
-function start() { if (started) return; if (!PF.P && !SEM_CADASTRO) return telaCadastro(); started = true; { const a = PF.acesso(); passaporte(); if (a && a.ganho) setTimeout(() => toast('+' + a.ganho + ' pontos pelo acesso de hoje' + (a.seq > 1 ? ' · ' + a.seq + ' dias seguidos' : ''), 3.2), 7000); } somIniciar(); $('title').classList.add('off'); $('hud').classList.add('on'); refazerMarcas(); hudFase(); if (has('auto')) { cur = car; pedM.visible = false; } else cut = { t: 0, x0: ped.x, z0: ped.z }; }
+function start() { if (started) return; if (!PF.P && !SEM_CADASTRO) return telaCadastro(); started = true; if (window.__verGira) window.__verGira(); try { const o = screen.orientation; if (o && o.lock) o.lock('landscape').catch(() => {}); } catch (e) {} { const a = PF.acesso(); passaporte(); if (a && a.ganho) setTimeout(() => toast('+' + a.ganho + ' pontos pelo acesso de hoje' + (a.seq > 1 ? ' · ' + a.seq + ' dias seguidos' : ''), 3.2), 7000); } somIniciar(); $('title').classList.add('off'); $('hud').classList.add('on'); refazerMarcas(); hudFase(); if (has('auto')) { cur = car; pedM.visible = false; } else cut = { t: 0, x0: ped.x, z0: ped.z }; }
 $('play').onclick = () => { trocarPersonagem('prefeito'); start(); }; $('playD').onclick = () => { trocarPersonagem('dama'); start(); };
 
 
@@ -965,6 +965,18 @@ function drawVelo() {
 }
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); if ($('mapa').classList.contains('on')) drawMapa(); }
 addEventListener('resize', resize); resize(); applyTime();
+// mobile, sem depender do sistema: a barra do navegador muda o tamanho da tela e nem sempre dispara 'resize'
+addEventListener('orientationchange', () => setTimeout(resize, 250)); if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+document.addEventListener('contextmenu', e => { if (!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) e.preventDefault(); });
+document.addEventListener('visibilitychange', () => { if (!AC) return; try { document.hidden ? AC.suspend() : AC.resume(); } catch (e) {} });
+for (const ev of ['touchend', 'pointerup', 'keydown']) addEventListener(ev, () => { if (AC && AC.state === 'suspended' && !document.hidden) AC.resume().catch(() => {}); }, { passive: true });
+renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); $('perdeu').classList.add('on'); });
+$('perdeuOk').onclick = () => location.reload();
+{ const retrato = matchMedia('(orientation:portrait)'), toque = matchMedia('(pointer:coarse)'); let dispensado = false;
+  const ver = () => $('gira').classList.toggle('on', started && toque.matches && retrato.matches && !dispensado);
+  $('giraOk').onclick = () => { dispensado = true; ver(); }; (retrato.addEventListener ? retrato.addEventListener('change', ver) : retrato.addListener(ver)); addEventListener('resize', ver); window.__verGira = ver; }
+if (has('foto')) { $('title').style.display = 'none'; }
 camera.position.set(car.x, 60, car.z);
 let nFr = 0;
 function frame(now) {

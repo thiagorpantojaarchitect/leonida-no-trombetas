@@ -2,13 +2,41 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Leonida no Trombetas: Oriximiná (demo jogável)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Leonida no Trombetas: Oriximiná</title>
+<meta name="description" content="Dirija pelas ruas reais de Oriximiná, pilote lancha no rio Trombetas, decole do aeroporto e salte de paraquedas. Jogo de fã do Diário de Leonida, direto no navegador.">
+<meta name="theme-color" content="#140A26">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Oriximiná">
+<link rel="canonical" href="__SITE_URL__/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icones/icone-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Diário de Leonida">
+<meta property="og:title" content="Leonida no Trombetas: Oriximiná">
+<meta property="og:description" content="Dirija pelas ruas reais de Oriximiná, pilote lancha no rio Trombetas e salte de paraquedas. Jogue direto no navegador.">
+<meta property="og:url" content="__SITE_URL__/">
+<meta property="og:image" content="__SITE_URL__/icones/capa.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Vista aérea de Oriximiná no jogo, com o título Leonida no Trombetas: Oriximiná">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Leonida no Trombetas: Oriximiná">
+<meta name="twitter:description" content="Dirija pelas ruas reais de Oriximiná, pilote lancha no rio Trombetas e salte de paraquedas.">
+<meta name="twitter:image" content="__SITE_URL__/icones/capa.jpg">
 <style>
 /*FONTS*/
 :root{--noite:#140A26;--noite2:#24123F;--sol:#FF3D7F;--laranja:#FF8A3D;--areia:#FFE6C2;--neon:#2DE2E6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--noite);color:var(--areia);font-family:'Space Mono',ui-monospace,monospace;touch-action:none;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;position:fixed;inset:0;width:100%;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;background:var(--noite);color:var(--areia);font-family:'Space Mono',ui-monospace,monospace;touch-action:none;user-select:none;-webkit-user-select:none}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .disp{font-family:'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em}
 .script{font-family:'Yellowtail',cursive;color:var(--sol)}
@@ -91,6 +119,25 @@ body[data-modo=ped] #velo,body[data-modo=salto] #velo{display:none}
 @media (pointer:coarse){#fala{bottom:auto;top:64px;width:calc(100vw - 28px)}#obj{display:none!important}#pedais{display:grid}#velo{bottom:auto;top:12px;right:auto;left:50%;transform:translateX(-50%)}#btns{top:auto;bottom:150px}#loc{bottom:238px}}
 @media (pointer:coarse){#joy{display:block}#keys{display:none}#loc{bottom:238px}}
 @media (max-width:640px){#keys{display:none}}
+
+/* mobile: mesmo comportamento em iOS e Android */
+:root{--st:env(safe-area-inset-top,0px);--sr:env(safe-area-inset-right,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px)}
+canvas{display:block;touch-action:none}
+input,textarea{-webkit-user-select:text;user-select:text;touch-action:manipulation}
+button,label{touch-action:manipulation}
+#hud{inset:var(--st) var(--sr) var(--sb) var(--sl)}
+#title{padding:calc(24px + var(--st)) calc(24px + var(--sr)) calc(24px + var(--sb)) calc(24px + var(--sl));overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+#title{justify-content:flex-start}#title>*{flex:none}#title::before,#title::after{content:'';flex:1 0 0}
+#title small{bottom:calc(14px + var(--sb))}
+@media (pointer:coarse){#btns button{min-height:40px}#pedais button{min-width:64px;min-height:56px}#cad input:not([type=checkbox]){min-height:46px}#cEnviar,#play,#playD{min-height:48px}}
+@media (pointer:coarse) and (max-height:480px){#title .k:first-child{display:none}#title .s{font-size:clamp(22px,7vh,40px);margin-top:0}#title h1{font-size:clamp(36px,16vh,72px)}#cad{margin-top:8px;padding:10px;gap:6px}#cad .ck{font-size:10.5px}#btns{bottom:120px}#btns button{min-height:34px;padding:4px 10px}}
+@media (pointer:coarse) and (orientation:portrait){#title h1{font-size:clamp(52px,19vw,110px)}#title .pl{flex-direction:column;gap:16px}#joy{bottom:calc(120px + 4vh)}}
+#gira,#perdeu{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;background:rgba(20,10,38,.94)}
+#gira.on,#perdeu.on{display:flex}
+#gira .ic{font-size:54px;animation:gira 1.8s ease-in-out infinite}@keyframes gira{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (prefers-reduced-motion:reduce){#gira .ic{animation:none}}
+#gira b,#perdeu b{font-family:'Anton',Impact,sans-serif;font-size:24px;letter-spacing:.05em;text-transform:uppercase}
+#gira button,#perdeu button{font:inherit;font-size:14px;color:var(--noite);background:var(--areia);border:0;border-radius:999px;padding:12px 22px;min-height:46px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -116,6 +163,8 @@ body[data-modo=ped] #velo,body[data-modo=salto] #velo{display:none}
   <div id="lista"></div>
   <div id="sel"><div class="k" id="sK"></div><h3 id="sT" class="disp"></h3><p id="sP"></p><div id="sN"></div><div id="sB" class="bts"></div></div>
 </div>
+<div id="gira"><div class="ic">📱</div><b>Gire o aparelho</b><div>O jogo fica melhor com a tela deitada.</div><button id="giraOk">Continuar assim</button></div>
+<div id="perdeu"><b>O jogo foi pausado pelo aparelho</b><div>Isso acontece quando falta memória ou o navegador fica em segundo plano.</div><button id="perdeuOk">Recarregar</button></div>
 <div id="title">
   <div class="k">Diário de Leonida apresenta</div>
   <div class="s script">Leonida no Trombetas</div>

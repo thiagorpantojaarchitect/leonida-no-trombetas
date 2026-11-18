@@ -11,4 +11,6 @@ assert(js.length > 1e6 && js.includes('Rio Trombetas'), 'game.js');
 assert(m.aero && m.aero.pista.length >= 4, 'aeroporto');
 require('./dist-teste/fases.cjs');
 assert(html.includes('game.js?v=') && html.includes('OpenStreetMap'), 'index.html');
+assert(html.includes('og:image') && !html.includes('__SITE_URL__') && html.includes('viewport-fit=cover'), 'metadados');
+for (const f of ['manifest.webmanifest', 'icones/capa.jpg', 'icones/icone-192.png', 'icones/icone-512.png', 'icones/apple-touch-icon.png']) assert(fs.existsSync('dist/' + f), f);
 console.log('ok: mapa e pacote conferidos');
