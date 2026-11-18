@@ -696,7 +696,7 @@ function pular() { const v = plane; salto = { st: 'queda', vx: Math.sin(v.h) * v
 function abrirChute() { salto.st = 'aberto'; chute.visible = true; toast('Paraquedas aberto: A e D giram, W acelera, S freia', 2.6); }
 function mudarHora() { hora = HORAS[(HORAS.indexOf(hora) + 1) % 3]; horaAntes = null; applyTime(); }
 function voltar() { if (M) return iniciar(M.f); salto = null; chute.visible = false; if (cur === ped || cur.kind === 'plane') { POIS[cur.kind === 'plane' ? 0 : 1].ir(); if (plane.y > 0 || cur === ped) porVeiculo(plane, ...plane.home); } else { const h = cur.home; porVeiculo(cur, h[0], h[1], h[2]); } toast('De volta', 1.4); }
-{ const b = $('bBuzina'); b.addEventListener('pointerdown', buzinaOn); for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, buzinaOff); } $('bFarol').onclick = alternarFarol; $('bAcao').onclick = acao; $('bTroca').onclick = () => trocarPersonagem(); $('bHora').onclick = mudarHora; $('bVoltar').onclick = voltar;
+{ const b = $('bBuzina'); b.addEventListener('pointerdown', buzinaOn); for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, buzinaOff); } $('bFarol').onclick = alternarFarol; $('bAcao').onclick = acao; $('bTroca').onclick = () => trocarPersonagem(); $('bMais').onclick = ev => { ev.stopPropagation(); $('maisP').classList.toggle('on'); }; $('maisP').addEventListener('click', () => $('maisP').classList.remove('on')); $('bSom').onclick = () => { somOn = !somOn; $('bSom').textContent = somOn ? 'Som: ligado' : 'Som: desligado'; toast(somOn ? 'Som ligado' : 'Som desligado', 1.2); }; $('bHora').onclick = mudarHora; $('bVoltar').onclick = voltar;
 let toastT = 0; function toast(t, s = 2.6) { const e = $('toast'); e.textContent = t; e.classList.add('on'); toastT = s; }
 let started = false, cut = null;
 const SEM_CADASTRO = has('auto') || has('cena') || has('teste');
@@ -721,8 +721,24 @@ $('play').onclick = () => { trocarPersonagem('prefeito'); start(); }; $('playD')
 // ---------- som (WebAudio), faróis e nitro ----------
 let AC = null, SOM = null, somOn = true, marcha = 1, rpm = 0.2, trocaT = 0;
 const LIM = [0, 0.2, 0.4, 0.6, 0.8, 1.05];
+// No iPhone, a chave de silencioso corta o som de páginas web. Declarar a sessão como "reprodução"
+// e manter um áudio mudo tocando faz o som do jogo sair como o de um vídeo, em qualquer sistema.
+let mudo = null;
+function destravarSom() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  try {
+    if (!mudo) {
+      const n = 4000, b = new ArrayBuffer(44 + n), v = new DataView(b), w = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+      w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+      for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+      mudo = new Audio(URL.createObjectURL(new Blob([b], { type: 'audio/wav' }))); mudo.loop = true; mudo.setAttribute('playsinline', ''); mudo.preload = 'auto';
+    }
+    if (mudo.paused && !document.hidden) { const pr = mudo.play(); if (pr && pr.catch) pr.catch(() => {}); }
+  } catch (e) {}
+  if (AC && AC.state !== 'running' && !document.hidden) { try { const pr = AC.resume(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} }
+}
 function somIniciar() {
-  if (AC) return; try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  if (AC) return destravarSom(); try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } destravarSom();
   const master = AC.createGain(), comp = AC.createDynamicsCompressor(); master.gain.value = 0.9; master.connect(comp); comp.connect(AC.destination);
   const osc = (tipo, det = 0) => { const o = AC.createOscillator(); o.type = tipo; o.detune.value = det; o.start(); return o; };
   const o1 = osc('sawtooth'), o2 = osc('sawtooth', 16), o3 = osc('square'), f = AC.createBiquadFilter(), g = AC.createGain(), g3 = AC.createGain(); f.type = 'lowpass'; f.Q.value = 2.5; g.gain.value = 0; g3.gain.value = 0.55;
@@ -880,7 +896,7 @@ function passoCena(dt) {
   if (t < 3.4) { ped.h = car.h + Math.PI * 0.5 + Math.sin(t * 0.9) * 0.12; MOD.andar(pedM, 0, 0); pedM.userData.bd.rotation.x = t > 1.2 && t < 2.6 ? -2.6 + Math.sin(t * 12) * 0.25 : 0; }
   else if (t < 4.9) { const u = (t - 3.4) / 1.5; ped.x = lerp(cut.x0, dx, u); ped.z = lerp(cut.z0, dz, u); ped.h = Math.atan2(dx - cut.x0, dz - cut.z0); ped.fase += dt * 9; MOD.andar(pedM, ped.fase, 1); pedM.userData.bd.rotation.x = 0; }
   else if (t < 5.5) { const u = (t - 4.9) / 0.6; pedM.scale.setScalar(1 - u * 0.75); pedM.position.y = 0.3 + u * 0.3; }
-  if (t >= 5.5) { pedM.scale.setScalar(1); pedM.visible = false; ped.x = cut.x0; ped.z = cut.z0; cur = car; cut = null; $('cena').classList.remove('on'); fala(PESSOAS[jog].rotulo, 'Bem-vindo a Oriximiná! Siga a luz da fase 1 aqui na orla, ou aperte M e escolha a fase no mapa. As luzes amarelas são os cartões-postais da cidade.', 9); return; }
+  if (t >= 5.5) { pedM.scale.setScalar(1); pedM.visible = false; ped.x = cut.x0; ped.z = cut.z0; cur = car; cut = null; $('cena').classList.remove('on'); fala(PESSOAS[jog].rotulo, 'Bem-vindo a Oriximiná! Siga a luz da fase 1 aqui na orla, ou ' + (matchMedia('(pointer:coarse)').matches ? 'toque em Mapa' : 'aperte M') + ' e escolha a fase no mapa. As luzes amarelas são os cartões-postais da cidade.', 9); return; }
   $('cena').classList.add('on');
 }
 function mundo(dt) {
@@ -969,14 +985,16 @@ addEventListener('resize', resize); resize(); applyTime();
 addEventListener('orientationchange', () => setTimeout(resize, 250)); if (window.visualViewport) visualViewport.addEventListener('resize', resize);
 for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
 document.addEventListener('contextmenu', e => { if (!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) e.preventDefault(); });
-document.addEventListener('visibilitychange', () => { if (!AC) return; try { document.hidden ? AC.suspend() : AC.resume(); } catch (e) {} });
-for (const ev of ['touchend', 'pointerup', 'keydown']) addEventListener(ev, () => { if (AC && AC.state === 'suspended' && !document.hidden) AC.resume().catch(() => {}); }, { passive: true });
+document.addEventListener('visibilitychange', () => { if (!AC) return; try { if (document.hidden) { AC.suspend(); if (mudo) mudo.pause(); } else destravarSom(); } catch (e) {} });
+for (const ev of ['touchend', 'pointerup', 'click', 'keydown']) addEventListener(ev, () => { if (AC && (AC.state !== 'running' || (mudo && mudo.paused))) destravarSom(); }, { passive: true });
 renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); $('perdeu').classList.add('on'); });
 $('perdeuOk').onclick = () => location.reload();
 { const retrato = matchMedia('(orientation:portrait)'), toque = matchMedia('(pointer:coarse)'); let dispensado = false;
   const ver = () => $('gira').classList.toggle('on', started && toque.matches && retrato.matches && !dispensado);
   $('giraOk').onclick = () => { dispensado = true; ver(); }; (retrato.addEventListener ? retrato.addEventListener('change', ver) : retrato.addListener(ver)); addEventListener('resize', ver); window.__verGira = ver; }
 if (has('foto')) { $('title').style.display = 'none'; }
+// teste no computador: #toque aplica o layout de toque sem precisar de um celular
+if (has('toque')) for (const folha of document.styleSheets) { try { for (const r of folha.cssRules) if (r.media && r.media.mediaText.includes('pointer')) r.media.mediaText = r.media.mediaText.replace(/\(pointer:\s*coarse\)/g, 'all'); } catch (e) {} }
 camera.position.set(car.x, 60, car.z);
 let nFr = 0;
 function frame(now) {

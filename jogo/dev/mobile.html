@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Teste do layout de toque</title>
+<style>body{margin:0;background:#333;color:#fff;font:13px system-ui;padding:10px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}figure{margin:0}figcaption{margin-bottom:4px}iframe{border:0;display:block;background:#000}</style></head>
+<body>
+<script>
+// Uso: dev/mobile.html?f=auto-f2-drive  (flags do jogo depois de #toque-)
+const f = new URLSearchParams(location.search).get('f') || 'auto';
+for (const [n, w, h] of [['iPhone deitado, Safari com abas (844×292)', 844, 292], ['iPhone deitado, tela cheia (844×390)', 844, 390], ['iPhone em pé (390×664)', 390, 664]])
+  document.body.insertAdjacentHTML('beforeend', `<figure><figcaption>${n}</figcaption><iframe width="${w}" height="${h}" src="../dist/index.html?t=${Date.now()}#toque-${f}"></iframe></figure>`);
+</script>
+</body></html>
