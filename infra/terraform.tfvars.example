@@ -1,0 +1,10 @@
+# Copie para terraform.tfvars (que fica fora do git) e preencha.
+email_destino = "seu-email@exemplo.com"
+
+# Depois de registrar o domínio no Route 53:
+# dominio  = "jogo.exemplo.com"
+# zona_dns = "exemplo.com"
+
+# Para o deploy automático do site pelo GitHub Actions:
+# github_repo         = "dono/leonida-no-trombetas"
+# criar_provedor_oidc = true

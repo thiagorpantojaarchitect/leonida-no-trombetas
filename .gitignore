@@ -1,0 +1,10 @@
+node_modules/
+jogo/dist/
+jogo/dist-teste/
+infra/.terraform/
+infra/.build/
+infra/*.tfstate*
+infra/terraform.tfvars
+infra/plano.tfplan
+.DS_Store
+*.glb

@@ -1,0 +1,32 @@
+name: Publicar site
+# Só roda quando você aperta "Run workflow". Nada vai ao ar sozinho.
+on:
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+concurrency: publicar-site
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment: producao
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_PAPEL_SITE }}
+          aws-region: sa-east-1
+      - name: Compilar e testar
+        working-directory: jogo
+        run: npm ci && npm test
+      - name: Enviar
+        working-directory: jogo
+        env:
+          BUCKET: ${{ vars.BUCKET_SITE }}
+          DIST: ${{ vars.DISTRIBUICAO_ID }}
+        run: |
+          aws s3 sync dist "s3://$BUCKET" --delete --exclude index.html --exclude game.js --exclude config.js --exclude LEIAME.txt --cache-control "public,max-age=86400"
+          aws s3 cp dist "s3://$BUCKET" --recursive --exclude "*" --include index.html --include game.js --include config.js --cache-control "no-cache"
+          aws cloudfront create-invalidation --distribution-id "$DIST" --paths /index.html /game.js /config.js /

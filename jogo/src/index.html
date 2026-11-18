@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Leonida no Trombetas: Oriximiná (demo jogável)</title>
+<style>
+/*FONTS*/
+:root{--noite:#140A26;--noite2:#24123F;--sol:#FF3D7F;--laranja:#FF8A3D;--areia:#FFE6C2;--neon:#2DE2E6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--noite);color:var(--areia);font-family:'Space Mono',ui-monospace,monospace;touch-action:none;user-select:none;-webkit-user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.disp{font-family:'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em}
+.script{font-family:'Yellowtail',cursive;color:var(--sol)}
+.retro{color:var(--areia);text-shadow:.045em .045em 0 var(--neon),.09em .09em 0 var(--sol)}
+#title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,rgba(20,10,38,.25),rgba(20,10,38,.82));transition:opacity .5s}
+#title.off{opacity:0;pointer-events:none}
+#title .k{font-size:clamp(11px,1.6vw,15px);letter-spacing:.3em;color:var(--neon);text-transform:uppercase}
+#title .s{font-size:clamp(34px,7vw,72px);line-height:1;margin-top:10px;text-shadow:0 3px 14px #000}
+#title h1{font-size:clamp(64px,15vw,170px);line-height:.95;margin:0 0 .12em;font-weight:400}
+#title p{max-width:34em;font-size:clamp(12px,1.5vw,15px);line-height:1.6;margin:14px 0 0;text-wrap:balance}
+#title .pl{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;margin-top:26px}#play,#playD{font:inherit;font-family:'Anton',Impact,sans-serif;font-size:clamp(18px,2.6vw,28px);letter-spacing:.06em;color:var(--noite);background:var(--areia);border:0;border-radius:999px;padding:.35em 1.6em;cursor:pointer;box-shadow:.14em .14em 0 var(--neon),.28em .28em 0 var(--sol)}
+#play:active,#playD:active{transform:translate(.1em,.1em);box-shadow:.04em .04em 0 var(--neon),.1em .1em 0 var(--sol)}
+#cad{margin-top:20px;width:min(430px,92vw);display:flex;flex-direction:column;gap:9px;background:rgba(20,10,38,.78);border:1.5px solid var(--areia);border-radius:18px;padding:16px;text-align:left}
+#cad .ct{font-family:'Anton',Impact,sans-serif;font-size:19px;letter-spacing:.06em;text-transform:uppercase;color:var(--areia);text-align:center}
+#cad .cl{display:flex;gap:9px}#cad .cl input{flex:1;min-width:0}
+#cad input:not([type=checkbox]){font:inherit;font-size:16px;color:var(--noite);background:var(--areia);border:0;border-radius:10px;padding:11px 12px;width:100%;box-sizing:border-box}
+#cad .ck{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;line-height:1.45;cursor:pointer}#cad .ck input{margin-top:2px;width:18px;height:18px;flex:none}
+#cErro{min-height:1.2em;font-size:12.5px;color:#ffd166;font-weight:700}
+#cEnviar{font:inherit;font-family:'Anton',Impact,sans-serif;font-size:20px;letter-spacing:.06em;color:var(--noite);background:var(--areia);border:0;border-radius:999px;padding:.4em 1.2em;cursor:pointer;box-shadow:.14em .14em 0 var(--neon),.28em .28em 0 var(--sol)}
+#jogar{display:flex;flex-direction:column;align-items:center}#ola{margin-top:16px}#pass{font-size:12.5px;margin-top:6px;opacity:.95}
+#passH{font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.9;margin-top:2px}
+@media (max-height:620px){#title p{display:none}#title h1{font-size:clamp(44px,12vh,90px)}#title small{display:none}}
+#title small{position:absolute;bottom:14px;left:16px;right:16px;font-size:10.5px;line-height:1.5;opacity:.8}
+#hud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
+#hud.on{opacity:1}
+#mm{position:absolute;left:14px;top:14px;width:clamp(104px,17vw,170px);height:auto;aspect-ratio:1;border-radius:50%;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+#info{position:absolute;right:14px;top:14px;text-align:right;text-shadow:0 2px 8px #000}
+#info .t{font-size:11px;letter-spacing:.22em;color:var(--neon);text-transform:uppercase}
+#count{font-size:clamp(34px,6vw,58px);line-height:1}
+#alvo{font-size:clamp(11px,1.4vw,13px);max-width:46vw;margin-top:4px}
+#loc{position:absolute;left:16px;bottom:16px;text-shadow:0 2px 10px #000}
+#rua{font-size:clamp(26px,4.4vw,46px);line-height:1}
+#vel{font-size:12px;letter-spacing:.14em;color:var(--neon);text-transform:uppercase;margin-bottom:4px}
+#toast{position:absolute;left:50%;top:22%;transform:translate(-50%,-10px);max-width:86vw;text-align:center;font-family:'Anton',Impact,sans-serif;text-transform:uppercase;font-size:clamp(20px,3.6vw,38px);line-height:1.1;color:var(--areia);text-shadow:.05em .05em 0 var(--sol),0 4px 18px #000;opacity:0;transition:opacity .3s,transform .3s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#btns{position:absolute;right:14px;bottom:16px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+#btns button{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--areia);background:rgba(20,10,38,.72);border:1.5px solid var(--areia);border-radius:999px;padding:9px 16px;cursor:pointer;min-width:112px}
+#btns button:active{background:var(--sol);border-color:var(--sol)}
+#joy{position:absolute;left:18px;bottom:96px;width:132px;height:132px;border-radius:50%;border:1.5px solid rgba(255,230,194,.6);background:rgba(20,10,38,.38);pointer-events:auto;display:none;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:var(--areia);opacity:.9}
+#keys{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:11px;letter-spacing:.06em;opacity:.85;text-shadow:0 2px 6px #000;white-space:nowrap}
+
+#mm{pointer-events:auto;cursor:pointer}
+#obj{position:absolute;right:14px;top:clamp(108px,17vh,150px);max-width:min(330px,44vw);text-align:right;font-size:11.5px;line-height:1.4;background:rgba(20,10,38,.7);border-right:3px solid var(--neon);padding:7px 10px;border-radius:8px 0 0 8px;display:none}
+#obj.on{display:block}#obj b{display:block;color:var(--neon);letter-spacing:.16em;text-transform:uppercase;font-size:10px}
+#fala{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);width:min(620px,calc(100vw - 420px));min-width:280px;display:none;gap:10px;align-items:center;background:rgba(20,10,38,.86);border:1.5px solid var(--areia);border-radius:14px;padding:9px 12px;font-size:13px;line-height:1.4}
+#fala.on{display:flex}#fala img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--sol);flex:none}#fala b{display:block;color:var(--sol);font-family:'Yellowtail',cursive;font-size:19px;font-weight:400;line-height:1}
+#cA{width:84px!important;height:84px;border-radius:50%!important;object-fit:cover;border:3px solid var(--sol);margin:0 auto 6px!important;display:block}
+#cO{font-size:13px;line-height:1.45;background:rgba(45,226,230,.12);border-left:3px solid var(--neon);padding:7px 10px;border-radius:6px;text-align:left;margin:8px 0}
+#velo{position:absolute;right:14px;bottom:14px;width:clamp(110px,15vw,170px);height:auto}
+#btns{top:auto;bottom:200px}
+#btns{gap:6px}#btns button{min-width:104px;padding:7px 12px}#keys{font-size:10px;right:200px;left:auto;transform:none;white-space:normal;text-align:right;max-width:46vw}
+#cena{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity .4s;text-shadow:0 2px 10px #000}
+#cena.on{opacity:1}#cena b{display:block;font-family:'Anton',Impact,sans-serif;font-size:clamp(28px,5vw,54px);text-transform:uppercase;font-weight:400}#cena span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--neon)}
+#pedais{position:absolute;right:14px;bottom:18px;display:none;grid-template-columns:1fr 1fr;gap:8px;pointer-events:auto}
+#pedais button{font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--noite);background:var(--areia);border:0;border-radius:14px;padding:16px 10px;min-width:84px;opacity:.92}
+#pGas{background:var(--sol)!important;color:#fff!important}#pNitro{background:#4ad8ff!important;grid-column:span 2}body[data-modo=ped] #pNitro{display:none}#pSobe,#pDesce{display:none}
+body[data-modo=plane] #pSobe,body[data-modo=plane] #pDesce{display:block}
+body[data-modo=ped] #velo,body[data-modo=salto] #velo{display:none}
+#cartaz,#mapa{position:fixed;inset:0;display:none;z-index:5}
+#cartaz.on{display:flex;align-items:center;justify-content:center;background:rgba(20,10,38,.62);padding:16px}
+.cx{background:var(--noite2);border:2px solid var(--areia);border-radius:18px;padding:20px 22px;max-width:min(560px,94vw);max-height:92vh;overflow:auto;text-align:center;box-shadow:.4em .4em 0 var(--sol)}
+.cx img{width:100%;max-height:46vh;object-fit:cover;border-radius:10px;margin-bottom:12px}
+.k{font-size:11px;letter-spacing:.18em;color:var(--neon);text-transform:uppercase}
+.cx h2{font-size:clamp(28px,5.4vw,50px);line-height:1.02;margin:.15em 0 .1em;font-weight:400}
+#cQ{font-size:clamp(20px,3.4vw,30px)}.cx p{font-size:14px;line-height:1.55;margin:8px 0}#cN,#sN{font-size:12px;opacity:.85;margin-bottom:6px}
+.bts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.bts button,#mTopo button{font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--areia);background:transparent;border:1.5px solid var(--areia);border-radius:999px;padding:9px 16px;cursor:pointer}
+.bts button.pri,#mTopo button.pri{background:var(--areia);color:var(--noite)}
+#mapa.on{display:block;background:#24183f}
+#mapc{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;cursor:grab}
+#mTopo{position:absolute;left:0;right:0;top:0;display:flex;gap:8px;align-items:center;padding:10px 12px;background:linear-gradient(rgba(20,10,38,.92),rgba(20,10,38,0))}
+#mTopo b{font-size:22px;font-weight:400}#mTit{flex:1;font-size:11px;opacity:.85}
+#lista{position:absolute;right:10px;top:58px;bottom:10px;width:min(300px,42vw);overflow:auto;display:flex;flex-direction:column;gap:5px;touch-action:pan-y}
+#lista button{display:flex;gap:9px;align-items:center;text-align:left;font:inherit;font-size:12px;color:var(--areia);background:rgba(20,10,38,.84);border:1px solid rgba(255,230,194,.35);border-radius:10px;padding:7px 9px;cursor:pointer}
+#lista b{font-family:'Anton',Impact,sans-serif;font-size:19px;font-weight:400;width:24px;color:var(--neon)}#lista span{flex:1}#lista i{display:block;font-style:normal;font-size:10px;opacity:.7}#lista em{font-style:normal;color:#ffd23a}
+#lista .ok b{color:#7ee04a}#lista .tr{opacity:.5}
+#sel{position:absolute;left:10px;bottom:10px;width:min(380px,calc(56vw - 20px));background:var(--noite2);border:2px solid var(--areia);border-radius:14px;padding:14px 16px;display:none}
+#sel.on{display:block}#sel h3{font-size:26px;margin:.1em 0;font-weight:400}#sel p{font-size:13px;line-height:1.5;margin:6px 0}#sel .bts{justify-content:flex-start}
+@media (pointer:coarse){#fala{bottom:auto;top:64px;width:calc(100vw - 28px)}#obj{display:none!important}#pedais{display:grid}#velo{bottom:auto;top:12px;right:auto;left:50%;transform:translateX(-50%)}#btns{top:auto;bottom:150px}#loc{bottom:238px}}
+@media (pointer:coarse){#joy{display:block}#keys{display:none}#loc{bottom:238px}}
+@media (max-width:640px){#keys{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <canvas id="mm" width="340" height="340" title="Abrir o mapa"></canvas>
+  <div id="info"><div class="t" id="lab">fases</div><div id="count" class="disp retro">0/30</div><div id="alvo"></div><div id="passH"></div></div>
+  <div id="obj"><b>Objetivo</b><span id="objT"></span></div>
+  <div id="toast"></div>
+  <div id="fala"><img id="falaI" alt=""><div><b id="falaQ"></b><span id="falaT"></span></div></div>
+  <div id="cena"><b>Prefeito Delegado Fonseca</b><span>e a primeira-dama Renata Fonseca · Oriximiná</span></div>
+  <div id="loc"><div id="vel"></div><div id="rua" class="disp retro">Orla de Oriximiná</div></div>
+  <canvas id="velo" width="220" height="220"></canvas>
+  <div id="joy"><div id="knob"></div></div>
+  <div id="pedais"><button id="pSobe">▲</button><button id="pDesce">▼</button><button id="pNitro">Nitro</button><button id="pFreio">Freio</button><button id="pGas">Acelera</button></div>
+  <div id="btns"><button id="bMapa">Mapa</button><button id="bAcao">Entrar</button><button id="bTroca">Jogar com Renata</button><button id="bBuzina">Buzina</button><button id="bFarol">Faróis</button><button id="bHora">Pôr do sol</button><button id="bVoltar">Voltar</button></div>
+  <div id="keys">W A S D: dirigir · Espaço: freio (avião: subir) · Shift ou X: nitro (avião: Shift desce, X turbo) · H: buzina · L: faróis · E: entrar em qualquer veículo, sair, saltar · C: trocar de personagem · M: mapa · N: hora · U: som</div>
+</div>
+<div id="cartaz"><div class="cx"><img id="cImg" alt=""><img id="cA" alt=""><div class="k" id="cK"></div><h2 id="cT" class="disp retro"></h2><div id="cQ" class="script"></div><p id="cP"></p><div id="cO"></div><div id="cN"></div><div id="cB" class="bts"></div></div></div>
+<div id="mapa">
+  <canvas id="mapc"></canvas>
+  <div id="mTopo"><b class="disp">Mapa de Oriximiná</b><span id="mTit"></span><button id="zMenos">−</button><button id="zMais">+</button><button id="zTudo">Ver aeroporto</button><button id="mFechar" class="pri">Fechar</button></div>
+  <div id="lista"></div>
+  <div id="sel"><div class="k" id="sK"></div><h3 id="sT" class="disp"></h3><p id="sP"></p><div id="sN"></div><div id="sB" class="bts"></div></div>
+</div>
+<div id="title">
+  <div class="k">Diário de Leonida apresenta</div>
+  <div class="s script">Leonida no Trombetas</div>
+  <h1 class="disp retro">Oriximiná</h1>
+  <div class="k">30 fases · 2 personagens · 9 carros, lancha, iate, avião e paraquedas</div>
+  <p>Dirija nove carros pelas ruas reais da cidade, pilote a lancha e o iate no rio Trombetas, decole do aeroporto e salte de paraquedas sobre a orla. Vença os desafiantes e complete o álbum de cartões-postais.</p>
+  <form id="cad" novalidate>
+    <div class="ct">Pré-cadastro para jogar</div>
+    <div class="cl"><input id="cNome" autocomplete="given-name" maxlength="40" placeholder="Nome"><input id="cSobre" autocomplete="family-name" maxlength="40" placeholder="Sobrenome"></div>
+    <input id="cTel" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="15" placeholder="Telefone com DDD">
+    <label class="ck"><input id="cOk" type="checkbox"><span>Autorizo o envio do meu nome e telefone ao organizador do jogo (Diário de Leonida) para contato. Nenhum outro jogador vê estes dados. Menor de 18 anos: peça a um responsável para preencher.</span></label>
+    <div id="cErro" role="alert"></div>
+    <button id="cEnviar" type="submit">Cadastrar e jogar</button>
+  </form>
+  <div id="jogar"><div id="ola" class="k"></div><div id="pass"></div><div class="pl"><button id="play">Jogar com o Prefeito</button><button id="playD" class="play2">Jogar com Renata Fonseca</button></div></div>
+  <small>Jogo de fã do @diariodeleonidabr, sem ligação com a Rockstar Games. Ruas, prédios, rio e aeroporto: © colaboradores do OpenStreetMap (ODbL). O prefeito e a primeira-dama aparecem com autorização deles; os desafiantes são fictícios. O pré-cadastro (nome e telefone) fica neste aparelho e segue só para o organizador. Modelos 3D e texturas gerados com IA; alturas e cores dos prédios são ilustrativas.</small>
+</div>
+<script src="config.js"></script>
+<!--SCRIPT-->
+</body>
+</html>

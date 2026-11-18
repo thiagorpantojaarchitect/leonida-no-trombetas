@@ -1,0 +1,14 @@
+import assert from 'assert';
+globalThis.localStorage = { d: {}, getItem(k) { return this.d[k] ?? null; }, setItem(k, v) { this.d[k] = v; } };
+const M = await import('./perfil.js');
+assert.equal(M.mascara('93991234567'), '(93) 99123-4567'); assert.equal(M.mascara('9335441234'), '(93) 3544-1234');
+assert(M.validar('', 'Silva', '93991234567', true)); assert(M.validar('Ana', 'Silva', '9399', true)); assert(M.validar('Ana', 'Silva', '11111111111', true)); assert(M.validar('Ana', 'Silva', '93991234567', false));
+assert.equal(M.validar('Ana Lúcia', "D'Ávila", '(93) 99123-4567', true), '');
+M.criar('Ana', 'Silva', '93991234567'); assert.equal(M.P.tel, '(93) 99123-4567');
+let a = M.acesso('2026-11-18'); assert.deepEqual([a.ganho, a.seq, a.acessos], [50, 1, 1]);
+a = M.acesso('2026-11-18'); assert.deepEqual([a.ganho, a.acessos], [0, 2]);
+a = M.acesso('2026-11-19'); assert.deepEqual([a.ganho, a.seq], [60, 2]);
+a = M.acesso('2026-11-22'); assert.deepEqual([a.ganho, a.seq], [50, 1]);
+assert.equal(M.P.pontos, 160); assert.equal(M.nivel().nome, 'Visitante'); assert.equal(M.pontuar(60), 'Morador'); assert.equal(M.nivel().prox, 500);
+assert.equal(await M.enviar(), false); assert.equal(JSON.parse(localStorage.d.orx_perfil).enviado, false);
+console.log('ok: perfil e passaporte conferidos');
