@@ -70,7 +70,7 @@ function adesivo(g) { // refaz o adesivo das portas, legível dos dois lados
 function vestir(g, id, k = 1) { if (has('blocos')) return g; (ESPERA[id] = ESPERA[id] || []).push([g, k]); if (GLB[id]) aplicar(g, id, k); return g; }
 if (!has('blocos')) for (const id in MODS) carregarGLB(MODS[id].arq || id, gl => {
   const c = MODS[id], inner = gl.scene; inner.rotation.y = c.rot; inner.updateMatrixWorld(true);
-  const b = new THREE.Box3().setFromObject(inner), sz = b.getSize(new THREE.Vector3()), ce = b.getCenter(new THREE.Vector3()), k = c.esc || c.len / Math.max(sz.x, sz.z);
+  const b = new THREE.Box3().setFromObject(inner), sz = b.getSize(new THREE.Vector3()), ce = b.getCenter(new THREE.Vector3()), k = c.esc || c.len / Math.max(sz.x, sz.z); c.comp = Math.max(sz.x, sz.z) * k; c.larg = Math.min(sz.x, sz.z) * k; c.alt = sz.y * k * (1 - (c.afunda || 0));
   inner.position.set(-ce.x, -b.min.y - (c.afunda || 0) * sz.y, -ce.z);
   inner.traverse(o => { if (o.isMesh) { o.castShadow = true; o.material.metalness = 0.12; o.material.roughness = 0.5; } });
   const g = new THREE.Group(); g.add(inner); g.scale.setScalar(k); GLB[id] = g; (ESPERA[id] || []).forEach(([x, kk]) => aplicar(x, id, kk));
@@ -482,6 +482,7 @@ let M = null, cool = 0, horaAntes = null;
 const rivalG = new THREE.Group(); rivalG.visible = false; scene.add(rivalG);
 function porVeiculo(v, x, z, h, y = 0, vel = 0) { v.x = x; v.z = z; v.h = h; v.y = y; v.vy = 0; v.v = vel; v.thr = vel ? 0.8 : 0; }
 function iniciar(f) {
+  entra = null; portaG.visible = false; pedM.scale.setScalar(1);
   fecharMapa(); fecharCartaz(); salto = null; chute.visible = false; ped.y = 0;
   const v = VS[f.veic]; cur = v; pedM.visible = false;
   if (f.ar) porVeiculo(v, f.ar.x, f.ar.z, f.ar.h, f.ar.y, 55); else porVeiculo(v, f.start.x, f.start.z, f.start.h);
@@ -621,6 +622,10 @@ function drawMapa() {
     mc.fillStyle = feita ? '#7ee04a' : lib ? '#' + CORT[f.tipo].toString(16).padStart(6, '0') : '#6a6478'; mc.beginPath(); mc.arc(q[0], q[1], r, 0, 6.3); mc.fill(); mc.lineWidth = (sel === f ? 4 : 2) * dp; mc.strokeStyle = sel === f ? '#fff' : '#140a26'; mc.stroke();
     mc.fillStyle = '#140a26'; mc.font = `700 ${11 * dp}px Arial`; mc.fillText(f.n, q[0], q[1] + dp);
   }
+  mc.font = `${15 * dp}px serif`; for (const v of Object.values(VS)) { if (v === cur) continue; const q = mT(v.x, v.z); mc.fillText(v.kind === 'boat' ? '🚤' : v.kind === 'plane' ? '✈️' : '🚗', q[0], q[1]); }
+  { const L = [['#2de2e6', 'Contra o tempo'], ['#ff3d7f', 'Corrida'], ['#ffd23a', 'Entrega'], ['#7ee04a', 'Voo'], ['#b07aff', 'Salto'], ['#6a6478', 'Bloqueada'], ['#ffe6c2', 'Lugar']], x0 = 10 * dp, y0 = 58 * dp, lh = 15 * dp; mc.fillStyle = 'rgba(20,10,38,.82)'; mc.beginPath(); mc.roundRect(x0, y0, 132 * dp, (L.length + 2) * lh + 8 * dp, 10 * dp); mc.fill(); mc.textAlign = 'left'; mc.font = `${10.5 * dp}px Arial`;
+    L.forEach(([c, t], i) => { const y = y0 + 12 * dp + i * lh; mc.fillStyle = c; mc.beginPath(); if (t === 'Lugar') mc.rect(x0 + 8 * dp, y - 4 * dp, 8 * dp, 8 * dp); else mc.arc(x0 + 12 * dp, y, 4.5 * dp, 0, 6.3); mc.fill(); mc.fillStyle = '#ffe6c2'; mc.fillText(t, x0 + 24 * dp, y); });
+    mc.fillStyle = '#ffe6c2'; mc.fillText('🚗 🚤 ✈️  Veículos', x0 + 8 * dp, y0 + 12 * dp + L.length * lh); mc.fillText('▲  Você', x0 + 8 * dp, y0 + 12 * dp + (L.length + 1) * lh); mc.textAlign = 'center'; }
   const q = mT(cur.x, cur.z); mc.save(); mc.translate(q[0], q[1]); mc.rotate(Math.PI - cur.h); mc.fillStyle = '#fff'; mc.strokeStyle = '#140a26'; mc.lineWidth = 2 * dp; mc.beginPath(); mc.moveTo(0, -12 * dp); mc.lineTo(8 * dp, 9 * dp); mc.lineTo(0, 4 * dp); mc.lineTo(-8 * dp, 9 * dp); mc.closePath(); mc.fill(); mc.stroke(); mc.restore();
 }
 function selecionar(o) {
@@ -640,8 +645,9 @@ function abrirMapa() {
   const l = $('lista'); l.innerHTML = '';
   FASES.forEach(f => { const s = SAVE.f[f.id], e = document.createElement('button'); e.className = s ? 'ok' : liberada(f) ? '' : 'tr'; e.innerHTML = `<b>${f.n}</b><span>${f.nome}<i>${TIPO[f.tipo]} · ${VEIC[f.veic].nome}</i></span><em>${s ? '★'.repeat(s.e) : liberada(f) ? '' : '🔒'}</em>`; e.onclick = () => { mv.x = f.marc[0]; mv.z = f.marc[1]; selecionar(f); }; l.appendChild(e); });
   $('mTit').textContent = nFeitas() + ' de 30 fases · ' + nEstrelas() + ' ★ · ' + CPS.filter(c => c.done).length + ' de ' + CPS.length + ' cartões';
-  if (!sel) { mv.x = clamp(cur.x, -1500, 4500); mv.z = clamp(cur.z, -7000, 1500); } selecionar(sel);
+  if (!sel) { mv.x = clamp(cur.x, -1500, 4500); mv.z = clamp(cur.z, -7000, 1500); mv.s = Math.max(mv.s, mapc.clientWidth * (devicePixelRatio > 1 ? 2 : 1) / 1700); } selecionar(sel);
 }
+$('mEu').onclick = () => { mv.x = cur.x; mv.z = cur.z; selecionar(null); };
 function fecharMapa() { $('mapa').classList.remove('on'); pausa = $('cartaz').classList.contains('on'); }
 {
   let dn = null, mov = 0;
@@ -676,11 +682,11 @@ jz.addEventListener('touchstart', joyMove, { passive: false }); jz.addEventListe
 for (const [id, k] of [['pGas', 'gas'], ['pFreio', 'freio'], ['pSobe', 'sobe'], ['pDesce', 'desce'], ['pNitro', 'nitro']]) { const b = $(id); const on = e => { toque[k] = 1; e.preventDefault(); }, off = () => { toque[k] = 0; }; b.addEventListener('touchstart', on, { passive: false }); b.addEventListener('touchend', off); b.addEventListener('touchcancel', off); b.addEventListener('mousedown', on); b.addEventListener('mouseup', off); b.addEventListener('mouseleave', off); }
 function orlaPerto(x, z) { let b = null, bd = 1e9; for (let i = 0; i <= 160; i++) { const o = orlaAt(i / 160), d = Math.hypot(o.x - x, o.z - z); if (d < bd) { bd = d; b = o; } } return b; }
 function acao() {
-  if (cut) return;
+  if (cut || entra) return;
   if (salto) { if (salto.st === 'queda') abrirChute(); return; }
   if (cur === ped) {
     let b = null, bd = 1e9; for (const v of Object.values(VS)) { const d = Math.hypot(v.x - ped.x, v.z - ped.z) - (v.kind === 'boat' ? 14 : v.kind === 'plane' ? 5 : 0); if (d < bd) { bd = d; b = v; } }
-    if (b && bd < 6) { cur = b; pedM.visible = false; toast(b.nome, 1.6); } else toast('Chegue perto de um veículo', 1.6);
+    if (b && bd < 6) { if (b.kind === 'car') comecarEntrar(b); else { cur = b; pedM.visible = false; somPorta(); toast(b.nome, 1.6); } } else toast('Chegue perto de um veículo', 1.6);
     return;
   }
   const v = cur;
@@ -690,7 +696,7 @@ function acao() {
   if (Math.abs(v.v) > 4) return toast('Pare o veículo para descer', 1.6);
   if (v.kind === 'boat') { const o = orlaPerto(v.x, v.z); if (Math.hypot(o.x - v.x, o.z - v.z) > 30) return toast('Encoste na orla para descer', 1.8); ped.x = o.x - o.nx * 2; ped.z = o.z - o.nz * 2; }
   else { let ok = false; for (const s of [1, -1]) { const x = v.x + Math.cos(v.h) * 2.6 * s, z = v.z - Math.sin(v.h) * 2.6 * s; if (!blocked(ped, x, z)) { ped.x = x; ped.z = z; ok = true; break; } } if (!ok) { ped.x = v.x - Math.sin(v.h) * 4; ped.z = v.z - Math.cos(v.h) * 4; } }
-  ped.h = v.h; ped.y = 0; ped.v = 0; v.v = 0; cur = ped; pedM.visible = true; toast('A pé', 1.2);
+  ped.h = v.h; ped.y = 0; ped.v = 0; v.v = 0; cur = ped; pedM.visible = true; somPorta(); toast('A pé', 1.2);
 }
 function pular() { const v = plane; salto = { st: 'queda', vx: Math.sin(v.h) * v.v * 0.55, vz: Math.cos(v.h) * v.v * 0.55 }; ped.x = v.x; ped.z = v.z; ped.y = v.y - 2; ped.vy = -4; ped.h = v.h; cur = ped; pedM.visible = true; plane.auto = true; toast('Queda livre! E ou Espaço abre o paraquedas', 2.6); }
 function abrirChute() { salto.st = 'aberto'; chute.visible = true; toast('Paraquedas aberto: A e D giram, W acelera, S freia', 2.6); }
@@ -800,6 +806,7 @@ function efeitos(dt, e) {
 
 // ---------- simulação ----------
 function blocked(v, x, z) {
+  if (v.kind === 'ped' && noPier(x, z)) return false;
   const dO = distOrla(x, z);
   if (v.kind === 'boat') return !inWater(x, z) || dO < 10.5;
   const r = v.kind === 'ped' ? 0.6 : 0; for (const o of OBST) if (Math.hypot(x - o[0], z - o[1]) < o[2] - (v.kind === 'ped' ? 1.2 : 0) + r) return true;
@@ -845,6 +852,135 @@ function passoSalto(e, dt) {
   }
 }
 let nameT = 0, last = performance.now(), tAll = 0, thrIn = 0;
+// ===================== entrar pela porta, câmera interna, pedestres, píer e garagem =====================
+let entra = null, camModo = 0, garPend = null;
+const fovBase = camera.fov;
+const dims = v => { const c = MODS[v.id] || {}; return { comp: c.comp || c.len || 4.4, larg: c.larg || 1.7, alt: c.alt || 1.5 }; };
+// --- porta: o personagem vai até o lado do motorista, a porta abre e ele entra
+const portaG = new THREE.Group(), portaM = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.62, 0.95).translate(0, 0, -0.475), new THREE.MeshStandardMaterial({ color: 0xe9e6de, roughness: 0.45, metalness: 0.2 }));
+portaG.add(portaM); portaG.visible = false; scene.add(portaG);
+function somPorta() { if (!AC || !SOM || !somOn) return; try { const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(), t = AC.currentTime; s.buffer = SOM.nb; f.type = 'lowpass'; f.frequency.value = 420; g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16); s.connect(f); f.connect(g); g.connect(SOM.master); s.start(t); s.stop(t + 0.2); } catch (e) {} }
+function comecarEntrar(b) { const d = dims(b), l = d.larg / 2 + 0.55; entra = { v: b, t: 0, fase: 0, px: b.x - Math.cos(b.h) * l + Math.sin(b.h) * 0.15, pz: b.z + Math.sin(b.h) * l + Math.cos(b.h) * 0.15 }; }
+function passoEntrar(dt) {
+  const E = entra, b = E.v, d = dims(b); E.t += dt;
+  if (E.fase === 0) {
+    const dx = E.px - ped.x, dz = E.pz - ped.z, L = Math.hypot(dx, dz);
+    if (L < 0.2 || E.t > 3) { E.fase = 1; E.t = 0; ped.v = 0; somPorta(); const g = SAVE.g && SAVE.g[b.id]; portaM.material.color.setHex(g && g.cor != null ? g.cor : 0xe9e6de); portaG.visible = true; }
+    else { const p = Math.min(L, 3.2 * dt); ped.x += dx / L * p; ped.z += dz / L * p; ped.h = Math.atan2(dx, dz); ped.v = 3.2; ped.fase += dt * 8; }
+  } else {
+    const u = E.t / 1.1, abre = u < 0.3 ? u / 0.3 : u < 0.72 ? 1 : Math.max(0, 1 - (u - 0.72) / 0.28), ent = clamp((u - 0.3) / 0.42, 0, 1);
+    portaG.position.set(b.x - Math.cos(b.h) * (d.larg / 2 + 0.03) + Math.sin(b.h) * 0.5, 0.2 + d.alt * 0.5, b.z + Math.sin(b.h) * (d.larg / 2 + 0.03) + Math.cos(b.h) * 0.5); portaG.rotation.y = b.h + abre * 1.15;
+    ped.h = b.h - Math.PI / 2; ped.x = lerp(E.px, b.x, ent * 0.8); ped.z = lerp(E.pz, b.z, ent * 0.8); pedM.scale.setScalar(1 - ent * 0.45);
+    if (u > 0.72 && pedM.visible) { pedM.visible = false; somPorta(); }
+    if (u >= 1) { portaG.visible = false; pedM.scale.setScalar(1); pedM.visible = false; ped.v = 0; cur = b; entra = null; toast(b.nome + (camModo ? '' : ' · V muda a câmera'), 1.8); }
+  }
+}
+// --- cabine: painel e volante por cima da câmera interna
+const cab = document.createElement('div'); cab.id = 'cabine';
+cab.innerHTML = '<div class="capo"></div><div class="col e"></div><div class="col d"></div><div class="painel"><svg id="volante" viewBox="-50 -50 100 100"><circle r="42" fill="none" stroke="#17131f" stroke-width="9"/><circle r="42" fill="none" stroke="#3a3346" stroke-width="2"/><path d="M-40 4 L-12 0 L12 0 L40 4 L40 10 L10 12 L5 40 L-5 40 L-10 12 L-40 10 Z" fill="#17131f"/><circle r="11" fill="#241d30" stroke="#3a3346" stroke-width="1.5"/></svg></div>';
+$('hud').appendChild(cab); const volante = cab.querySelector('#volante'); let volAng = 0;
+function alternarCamera() { if (cur === ped) return toast('A câmera interna vale dentro de um veículo', 1.8); camModo = camModo ? 0 : 1; toast(camModo ? 'Câmera interna' : 'Câmera externa', 1.2); }
+// --- píeres: caminho de madeira até os barcos
+const PIERS = [];
+function noPier(x, z) { for (const p of PIERS) { const rx = x - p.x, rz = z - p.z, a = rx * p.nx + rz * p.nz, b = Math.abs(rx * p.tx + rz * p.tz); if (a > -1.2 && a < p.comp + 0.4 && b < p.larg / 2 - 0.15) return true; } return false; }
+function fazerPier(o0, comp, nome, lat) {
+  const o = { x: o0.x + o0.tx * lat + o0.nx * 7.6, z: o0.z + o0.tz * lat + o0.nz * 7.6, nx: o0.nx, nz: o0.nz, tx: o0.tx, tz: o0.tz };
+  const larg = 3, g = new THREE.Group(), mad = new THREE.MeshLambertMaterial({ color: 0xb98a5a, map: tex('deck', larg / 3, comp / 3) }), esc = LM(0x5a4530);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(larg, 0.22, comp), mad); deck.position.set(0, 0.21, comp / 2); deck.receiveShadow = true; g.add(deck);
+  for (let d = 1; d <= comp; d += 3) for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.4, 6), esc); e.position.set(s * (larg / 2 - 0.1), -0.6, d); g.add(e); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 5), esc); c.position.set(s * (larg / 2 - 0.08), 0.75, d); g.add(c); }
+  for (const s of [-1, 1]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, comp - 1), esc); r.position.set(s * (larg / 2 - 0.08), 1.15, comp / 2 + 0.5); g.add(r); }
+  const e = MOD.etiqueta(nome); e.position.set(0, 3.4, comp - 1); e.scale.set(5.2, 1, 1); g.add(e);
+  g.position.set(o.x, 0, o.z); g.rotation.y = Math.atan2(o.nx, o.nz); scene.add(g);
+  PIERS.push({ x: o.x, z: o.z, nx: o.nx, nz: o.nz, tx: o.tx, tz: o.tz, comp, larg, nome });
+  POIS.push({ nome, x: o.x + o.nx * comp * 0.6, z: o.z + o.nz * comp * 0.6, txt: 'Píer de madeira para embarcar. Caminhe até a ponta e toque em Entrar.', ir: () => { cur = ped; pedM.visible = true; ped.x = o.x - o.nx * 3; ped.z = o.z - o.nz * 3; ped.y = 0; ped.h = Math.atan2(o.nx, o.nz); } });
+}
+fazerPier(oStart, 10, 'Porto das lanchas', -7.5); fazerPier(orlaAt(0.66), 13, 'Píer do iate', -11);
+// --- gente andando na orla e nas calçadas
+const ANDA = []; let LORLA = 0; { let a = orlaAt(0); for (let i = 1; i <= 80; i++) { const b = orlaAt(i / 80); LORLA += Math.hypot(b.x - a.x, b.z - a.z); a = b; } }
+{
+  const rs = rng, pele = [0xc48a5e, 0x8d5a3b, 0xe0ac7e, 0x6e4530], roupa = [0xff3d7f, 0x2de2e6, 0xf2f2ee, 0xffd23a, 0x3a70b0, 0x7ee04a, 0xe8703a, 0x8a4ac0], calca = [0x26324a, 0x3a3a40, 0x6b4a2e, 0x1f2a44, 0x8a8f99];
+  const nOrla = LEVE ? 7 : 16, nRua = LEVE ? 5 : 12, pick = a => a[Math.floor(rs() * a.length)];
+  const novo = () => { const m = MOD.pessoa({ camisa: pick(roupa), calca: pick(calca), pele: pick(pele), oculos: rs() < 0.25 }); m.scale.setScalar(0.92 + rs() * 0.14); scene.add(m); return m; };
+  for (let i = 0; i < nOrla; i++) ANDA.push({ m: novo(), orla: true, t: 0.06 + rs() * 0.88, d: -4.5 + rs() * 8, sp: (rs() < 0.5 ? -1 : 1) * (1 + rs() * 0.6), fase: rs() * 6 });
+  for (let i = 0; i < nRua; i++) { const a = G.perto(oStart.x - oStart.nx * (40 + rs() * 420) + (rs() - 0.5) * 900, oStart.z - oStart.nz * (40 + rs() * 420) + (rs() - 0.5) * 900); if (!a || !a.e || !a.e.length) continue; ANDA.push({ m: novo(), a, b: a.e[0][0], u: rs(), lado: rs() < 0.5 ? -1 : 1, sp: 1.1 + rs() * 0.5, fase: rs() * 6 }); }
+}
+function passoGente(dt) {
+  for (const p of ANDA) {
+    let x, z, h;
+    if (p.orla) { p.t += p.sp * dt / LORLA; if (p.t > 0.95 || p.t < 0.05) { p.sp = -p.sp; p.t = clamp(p.t, 0.05, 0.95); } const o = orlaAt(p.t); x = o.x + o.nx * p.d; z = o.z + o.nz * p.d; h = Math.atan2(o.tx, o.tz) + (p.sp < 0 ? Math.PI : 0); }
+    else { const L = Math.hypot(p.b.x - p.a.x, p.b.z - p.a.z) || 1; p.u += p.sp * dt / L; if (p.u >= 1) { const op = p.b.e.filter(q => q[0] !== p.a && Math.abs(q[0].x) < 1900 && Math.abs(q[0].z) < 1800), nx = op.length ? op[Math.floor(Math.random() * op.length)][0] : p.a; p.a = p.b; p.b = nx; p.u = 0; }
+      h = Math.atan2(p.b.x - p.a.x, p.b.z - p.a.z); x = lerp(p.a.x, p.b.x, p.u) + Math.cos(h) * 5.2 * p.lado; z = lerp(p.a.z, p.b.z, p.u) - Math.sin(h) * 5.2 * p.lado; }
+    const perto = Math.hypot(x - camera.position.x, z - camera.position.z) < 170; p.m.visible = perto; if (!perto) continue;
+    p.fase += Math.abs(p.sp) * dt * 4.2; MOD.andar(p.m, p.fase, 0.8); p.m.position.set(x, p.orla ? 0.32 : 0.09, z); let d = h - p.m.rotation.y; while (d > Math.PI) d -= 6.283; while (d < -Math.PI) d += 6.283; p.m.rotation.y += d * Math.min(1, dt * 6);
+  }
+}
+// --- garagem: pintura e acessórios do carro que você está dirigindo
+const CORES = [['Original', null], ['Branco', 0xf4f2ec], ['Prata', 0xb9bec6], ['Preto', 0x1b1b20], ['Vermelho', 0xd0222a], ['Laranja', 0xff7a1a], ['Amarelo', 0xf2c21a], ['Verde', 0x1f9d55], ['Azul', 0x1f5fd0], ['Roxo', 0x7a3fd0], ['Rosa', 0xff3d7f]];
+const ACESS = [['aero', 'Aerofólio'], ['bag', 'Bagageiro com prancha'], ['neon', 'Neon embaixo'], ['band', 'Bandeirola']];
+SAVE.g = SAVE.g || {};
+const BASES = {};
+function corBase(id) {
+  if (BASES[id]) return BASES[id]; const cor = new THREE.Color(0.8, 0.8, 0.8);
+  try { let img = null; GLB[id].traverse(o => { if (!img && o.isMesh && o.material.map && o.material.map.image) img = o.material.map.image; });
+    if (img) { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, 64, 64); const d = x.getImageData(0, 0, 64, 64).data, H = {};
+      for (let i = 0; i < d.length; i += 4) { const r = d[i], g = d[i + 1], b = d[i + 2], l = (r * 0.299 + g * 0.587 + b * 0.114) / 255; if (l < 0.2) continue; const k = (r >> 5) + '_' + (g >> 5) + '_' + (b >> 5), h = H[k] || (H[k] = [0, 0, 0, 0]); h[0]++; h[1] += r; h[2] += g; h[3] += b; }
+      let m = null; for (const k in H) if (!m || H[k][0] > m[0]) m = H[k]; if (m) cor.setRGB(m[1] / m[0] / 255, m[2] / m[0] / 255, m[3] / m[0] / 255, THREE.SRGBColorSpace); } } catch (e) {}
+  return BASES[id] = cor;
+}
+function pintar(v, hex) {
+  const g = v.m.userData.glb; if (!g) return false; let U = v.m.userData.pint;
+  if (!U) { if (hex == null) return true; U = v.m.userData.pint = { uTinta: { value: new THREE.Color() }, uBase: { value: corBase(v.id) }, uOn: { value: 0 } };
+    g.traverse(o => { if (!o.isMesh || !o.material.map) return; const m = o.material = o.material.clone();
+      m.onBeforeCompile = sh => { Object.assign(sh.uniforms, U); sh.fragmentShader = 'uniform vec3 uTinta;\nuniform vec3 uBase;\nuniform float uOn;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n{ vec3 cP = diffuseColor.rgb; float lumP = dot(cP, vec3(0.299, 0.587, 0.114)); float dP = distance(cP / max(max(cP.r, max(cP.g, cP.b)), 0.02), uBase / max(max(uBase.r, max(uBase.g, uBase.b)), 0.02)); float mP = (1.0 - smoothstep(0.14, 0.34, dP)) * smoothstep(0.05, 0.14, lumP) * uOn; float lP = lumP / max(dot(uBase, vec3(0.299, 0.587, 0.114)), 0.06); diffuseColor.rgb = mix(cP, uTinta * clamp(lP, 0.0, 1.3) + vec3(0.04) * clamp(lP - 0.9, 0.0, 1.0), mP); }'); };
+      m.customProgramCacheKey = () => 'pintura2'; m.needsUpdate = true; }); }
+  U.uOn.value = hex == null ? 0 : 1; if (hex != null) U.uTinta.value.setHex(hex); return true;
+}
+function acessorios(v, lista) {
+  const u = v.m.userData; if (u.ac) { v.m.remove(u.ac); u.ac = null; } if (!lista || !lista.length) return; const d = dims(v), g = new THREE.Group(), esc = new THREE.MeshStandardMaterial({ color: 0x17171c, roughness: 0.5, metalness: 0.3 }), cor = SAVE.g[v.id] && SAVE.g[v.id].cor;
+  const cx = (w, h, p, x, y, z, m = esc) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, p), m); b.position.set(x, y, z); b.castShadow = true; g.add(b); return b; };
+  if (lista.includes('aero')) { cx(d.larg * 0.86, 0.05, 0.32, 0, d.alt * 0.86, -d.comp * 0.45); for (const s of [-1, 1]) { cx(0.05, d.alt * 0.16, 0.1, s * d.larg * 0.3, d.alt * 0.79, -d.comp * 0.45); cx(0.04, 0.16, 0.34, s * d.larg * 0.43, d.alt * 0.88, -d.comp * 0.45); } }
+  if (lista.includes('bag')) { for (const s of [-1, 1]) cx(0.04, 0.04, d.comp * 0.36, s * d.larg * 0.3, d.alt + 0.05, -d.comp * 0.04); for (const z of [-0.2, 0.12]) cx(d.larg * 0.66, 0.04, 0.04, 0, d.alt + 0.07, d.comp * z);
+    const pr = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, Math.min(1.7, d.comp * 0.4), 4, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xff3d7f, roughness: 0.35 })); pr.scale.set(1, 0.16, 1); pr.position.set(0, d.alt + 0.14, -d.comp * 0.04); pr.castShadow = true; g.add(pr); }
+  if (lista.includes('neon')) { const n = new THREE.Mesh(new THREE.PlaneGeometry(d.larg * 1.9, d.comp * 1.35).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: cor != null && cor !== 0x1b1b20 ? cor : 0x2de2e6, map: brilhoTex(), transparent: true, opacity: 0.85, depthWrite: false })); n.position.y = 0.1; g.add(n); }
+  if (lista.includes('band')) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.2, 5), esc); p.position.set(-d.larg * 0.4, d.alt * 0.75 + 0.6, -d.comp * 0.38); g.add(p); const f = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.3).translate(-0.26, 0, 0), new THREE.MeshBasicMaterial({ color: 0xff3d7f, side: THREE.DoubleSide })); f.position.set(-d.larg * 0.4, d.alt * 0.75 + 1.05, -d.comp * 0.38); f.rotation.y = Math.PI / 2; g.add(f); }
+  v.m.add(g); u.ac = g;
+}
+let _brilho = null;
+function brilhoTex() { if (_brilho) return _brilho; const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 20, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.55, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return _brilho = new THREE.CanvasTexture(c); }
+function garAplicar(v) { const g = SAVE.g[v.id]; if (!v.m.userData.glb) return false; pintar(v, g ? g.cor : null); acessorios(v, g ? g.ac : null); return true; }
+garPend = Object.keys(SAVE.g);
+const gar = document.createElement('div'); gar.id = 'gar'; document.body.appendChild(gar);
+function fecharGaragem() { gar.classList.remove('on'); }
+function abrirGaragem() {
+  const v = cur; if (!v || v.kind !== 'car') return toast('Entre em um carro para abrir a garagem', 2);
+  if (!v.m.userData.glb) return toast('O modelo ainda está carregando', 1.6);
+  const g = SAVE.g[v.id] || (SAVE.g[v.id] = { cor: null, ac: [] }); gar.classList.add('on');
+  gar.innerHTML = '<div class="gx"><div class="k">Garagem</div><h3 class="disp">' + v.nome + '</h3><div class="gt">Pintura</div><div class="cores"></div><div class="gt">Acessórios</div><div class="acs"></div><div class="gn">Rodas, pneus e som do motor entram quando os modelos tiverem peças separadas.</div><div class="bts"><button id="gPadrao">Voltar ao original</button><button id="gOk" class="pri">Pronto</button></div></div>';
+  const cs = gar.querySelector('.cores'), as = gar.querySelector('.acs'), red = () => { garAplicar(v); salvar(); for (const b of cs.children) b.classList.toggle('on', (b.dataset.c === '' ? null : +b.dataset.c) === g.cor); for (const b of as.children) b.classList.toggle('on', g.ac.includes(b.dataset.a)); };
+  for (const [n, c] of CORES) { const b = document.createElement('button'); b.title = n; b.setAttribute('aria-label', n); b.dataset.c = c == null ? '' : c; b.style.background = c == null ? 'conic-gradient(#ff3d7f,#ffd23a,#2de2e6,#7a3fd0,#ff3d7f)' : '#' + c.toString(16).padStart(6, '0'); if (c == null) b.textContent = '↺'; b.onclick = () => { g.cor = c; red(); }; cs.appendChild(b); }
+  for (const [id, n] of ACESS) { const b = document.createElement('button'); b.textContent = n; b.dataset.a = id; b.onclick = () => { const i = g.ac.indexOf(id); if (i < 0) g.ac.push(id); else g.ac.splice(i, 1); red(); }; as.appendChild(b); }
+  gar.querySelector('#gPadrao').onclick = () => { g.cor = null; g.ac = []; red(); }; gar.querySelector('#gOk').onclick = fecharGaragem; red();
+}
+gar.addEventListener('click', e => { if (e.target === gar) fecharGaragem(); });
+$('bCam').onclick = alternarCamera; $('bGar').onclick = abrirGaragem;
+addEventListener('keydown', e => { if (!started || /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return; if (e.code === 'KeyV' && !e.repeat) alternarCamera(); if (e.code === 'KeyG' && !e.repeat) (gar.classList.contains('on') ? fecharGaragem : abrirGaragem)(); });
+function extrasPasso(dt) {
+  if (garPend && garPend.length) garPend = garPend.filter(id => !(VS[id] && garAplicar(VS[id])));
+  if (!pausa) passoGente(dt);
+  const v = cur, dentro = camModo === 1 && started && !cut && !salto && v.kind !== 'ped';
+  cab.classList.toggle('on', dentro && v.kind === 'car');
+  for (const o of Object.values(VS)) { const g = o.m.userData.glb, some = dentro && o === v; if (g && g.visible === some) { g.visible = !some; if (o.m.userData.ac) o.m.userData.ac.visible = !some; } }
+  if (dentro && v.kind === 'car') { const c = SAVE.g[v.id] && SAVE.g[v.id].cor; cab.style.setProperty('--capo', c != null ? '#' + c.toString(16).padStart(6, '0') : '#' + corBase(v.id).getHexString()); }
+  const fov = dentro ? 74 : fovBase; if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  if (dentro) {
+    const d = dims(v), y = v.y || 0; let ox = -d.larg * 0.2, oy = Math.max(1.02, d.alt * 0.8), oz = -d.comp * 0.03;
+    if (v.kind === 'boat') { ox = 0; oy = d.alt * 0.75 + 0.9; oz = -d.comp * 0.05; } if (v.kind === 'plane') { ox = 0; oy = d.alt * 0.72; oz = d.comp * 0.12; }
+    const px = v.x + Math.cos(v.h) * ox + Math.sin(v.h) * oz, pz = v.z - Math.sin(v.h) * ox + Math.cos(v.h) * oz;
+    camera.position.set(px, y + oy + 0.2, pz); camera.lookAt(px + Math.sin(v.h) * 30, y + oy - 1.4, pz + Math.cos(v.h) * 30);
+    volAng = lerp(volAng, entrada().st * 95, 0.2); volante.style.transform = 'rotate(' + volAng.toFixed(1) + 'deg)';
+  }
+}
+
 function step(dt) {
   tAll += dt;
   if (cut) passoCena(dt);
@@ -855,6 +991,7 @@ function step(dt) {
     if (!livre) { /* parado na largada */ }
     else if (salto) passoSalto(e, dt);
     else if (v.kind === 'plane') passoAviao(v, e, dt);
+    else if (v.kind === 'ped' && entra) passoEntrar(dt);
     else if (v.kind === 'ped') {
       const corre = keys.ShiftLeft || keys.ShiftRight ? 1.6 : 1; v.v = e.thr * 5.2 * corre * (e.thr < 0 ? 0.5 : 1); v.h -= e.st * 2.9 * dt;
       const nx = v.x + Math.sin(v.h) * v.v * dt, nz = v.z + Math.cos(v.h) * v.v * dt; if (!blocked(v, nx, nz)) { v.x = nx; v.z = nz; } else if (!blocked(v, nx, v.z)) v.x = nx; else if (!blocked(v, v.x, nz)) v.z = nz;
@@ -908,7 +1045,7 @@ function mundo(dt) {
   planeSombra.position.set(plane.x, 0.14, plane.z); planeSombra.rotation.y = plane.h; planeSombra.material.opacity = 0.3 * clamp(1 - plane.y / 160, 0, 1);
   uAgua.value = tAll; if (damaMix) damaMix.update(dt); if (rotuloNPC) rotuloNPC.visible = !cut;
   if (pedMix) { const andando = cur === ped && !salto && Math.abs(ped.v) > 0.3 || (cut && cut.t > 3.4 && cut.t < 4.9); const J = FIG[jog]; if (pedAnda) { pedAnda.w.visible = andando; J.parado.w.visible = !andando; if (andando) { pedAnda.act.timeScale = cut ? 1 : Math.max(0.6, Math.abs(ped.v) / 1.4); pedAnda.mix.update(dt); } else pedMix.update(dt); } else pedMix.update(dt); }
-  pedM.position.x = ped.x; pedM.position.z = ped.z; if (!cut || cut.t < 4.9) pedM.position.y = ped.y + (ped.y > 0 ? 0 : distOrla(ped.x, ped.z) < 8.6 ? 0.32 : 0.07); pedM.rotation.y = ped.h;
+  pedM.position.x = ped.x; pedM.position.z = ped.z; if (!cut || cut.t < 4.9) pedM.position.y = ped.y + (ped.y > 0 ? 0 : (distOrla(ped.x, ped.z) < 8.6 || noPier(ped.x, ped.z)) ? 0.32 : 0.07); pedM.rotation.y = ped.h;
   if (!cut) { if (salto) { MOD.andar(pedM, 0, 0); pedM.userData.be.rotation.x = pedM.userData.bd.rotation.x = salto.st === 'aberto' ? -2.7 : -1.2; pedM.userData.sombra.visible = false; } else { MOD.andar(pedM, ped.fase, clamp(Math.abs(ped.v) / 4, 0, 1)); pedM.userData.sombra.visible = true; } }
   wakeT -= dt; const bw = cur.kind === 'boat' ? cur : boat; if (Math.abs(bw.v) > 3 && wakeT <= 0) { wakeT = 0.07; const w = wake[wakeI++ % wake.length]; w.t = 0; w.m.position.x = bw.x - Math.sin(bw.h) * (bw === iate ? 7 : 3.2); w.m.position.z = bw.z - Math.cos(bw.h) * (bw === iate ? 7 : 3.2); }
   for (const w of wake) { w.t += dt; const k = w.t / 1.8; w.m.material.opacity = k < 1 ? 0.5 * (1 - k) : 0; const s = 1 + k * 4; w.m.scale.set(s, 1, s); }
@@ -999,7 +1136,7 @@ camera.position.set(car.x, 60, car.z);
 let nFr = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  const t0 = performance.now(); step(dt); const t1 = performance.now(); renderer.render(scene, camera); if (started) { drawMini(); drawVelo(); } if (has('log') && (nFr++ < 4)) console.log('F', nFr, Math.round(t1 - t0), Math.round(performance.now() - t1), renderer.info.render.calls, renderer.info.render.triangles);
+  const t0 = performance.now(); step(dt); extrasPasso(dt); const t1 = performance.now(); renderer.render(scene, camera); if (started) { drawMini(); drawVelo(); } if (has('log') && (nFr++ < 4)) console.log('F', nFr, Math.round(t1 - t0), Math.round(performance.now() - t1), renderer.info.render.calls, renderer.info.render.triangles);
   requestAnimationFrame(frame);
 }
 if (has('log')) console.log('M6', Math.round(performance.now()));

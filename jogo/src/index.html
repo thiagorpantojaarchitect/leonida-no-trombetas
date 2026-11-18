@@ -116,6 +116,20 @@ body[data-modo=ped] #velo,body[data-modo=salto] #velo{display:none}
 #lista .ok b{color:#7ee04a}#lista .tr{opacity:.5}
 #sel{position:absolute;left:10px;bottom:10px;width:min(380px,calc(56vw - 20px));background:var(--noite2);border:2px solid var(--areia);border-radius:14px;padding:14px 16px;display:none}
 #sel.on{display:block}#sel h3{font-size:26px;margin:.1em 0;font-weight:400}#sel p{font-size:13px;line-height:1.5;margin:6px 0}#sel .bts{justify-content:flex-start}
+
+#cabine{position:absolute;inset:0;display:none;pointer-events:none}#cabine.on{display:block}
+#cabine .col{position:absolute;top:0;bottom:30%;width:7%;background:linear-gradient(90deg,#0d0a14,#1d1727)}#cabine .e{left:0;transform:skewX(-9deg);transform-origin:top left}#cabine .d{right:0;transform:skewX(9deg);transform-origin:top right;background:linear-gradient(270deg,#0d0a14,#1d1727)}
+#cabine .capo{position:absolute;left:8%;right:8%;bottom:26%;height:17%;background:linear-gradient(rgba(255,255,255,.28),rgba(0,0,0,.28)),var(--capo,#e9e6de);border-radius:50% 50% 0 0/100% 100% 0 0;box-shadow:inset 0 6px 14px rgba(255,255,255,.25)}
+#cabine .painel{position:absolute;left:-4%;right:-4%;bottom:0;height:34%;background:linear-gradient(#2a2236,#120e1a);border-radius:46% 46% 0 0/36% 36% 0 0;box-shadow:0 -6px 18px rgba(0,0,0,.45)}
+#volante{position:absolute;left:24%;bottom:-34%;height:150%;aspect-ratio:1;transform-origin:50% 50%}
+#gar{position:fixed;inset:0;z-index:6;display:none;align-items:center;justify-content:flex-end;padding:calc(12px + var(--st)) calc(12px + var(--sr)) calc(12px + var(--sb)) 12px;pointer-events:none}
+#gar.on{display:flex}
+.gx{pointer-events:auto;width:min(330px,92vw);max-height:100%;overflow:auto;background:rgba(36,18,63,.96);border:2px solid var(--areia);border-radius:18px;padding:14px 16px;box-shadow:.3em .3em 0 var(--sol);touch-action:pan-y}
+.gx h3{font-size:26px;font-weight:400;margin:.05em 0 .3em}.gt{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--neon);margin:10px 0 6px}
+.cores{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.cores button{aspect-ratio:1;min-height:36px;border-radius:50%;border:2px solid rgba(255,230,194,.5);cursor:pointer;color:#fff;font-size:16px;padding:0}.cores button.on{border-color:#fff;box-shadow:0 0 0 3px var(--neon)}
+.acs{display:grid;grid-template-columns:1fr 1fr;gap:6px}.acs button{font:inherit;font-size:11px;color:var(--areia);background:transparent;border:1.5px solid rgba(255,230,194,.55);border-radius:12px;padding:8px 6px;min-height:40px;cursor:pointer}.acs button.on{background:var(--areia);color:var(--noite);border-color:var(--areia)}
+.gn{font-size:10.5px;line-height:1.4;opacity:.8;margin-top:10px}
+@media (pointer:coarse) and (max-height:480px){.gx{padding:10px 12px}.gx h3{font-size:20px}.cores{grid-template-columns:repeat(11,1fr);gap:5px}.cores button{min-height:26px}.gt{margin:6px 0 4px}.gn{display:none}.gx .bts{margin-top:8px}}
 #maisP{display:contents}#bMais,#bSom{display:none}
 /* ---------- layout de toque: cada canto com uma função ---------- */
 @media (pointer:coarse){
@@ -140,7 +154,7 @@ body[data-modo=ped] #velo,body[data-modo=salto] #velo{display:none}
   #btns button{min-width:0;min-height:40px;padding:6px 13px;font-size:11px;white-space:nowrap;background:rgba(20,10,38,.8)}
   #bMais,#bSom{display:block}
   #maisP{display:none;position:absolute;right:0;bottom:calc(100% + 8px);flex-direction:column;gap:6px;background:rgba(20,10,38,.92);border:1.5px solid var(--areia);border-radius:16px;padding:8px}
-  #maisP.on{display:grid;grid-template-columns:1fr 1fr}#maisP button{min-width:182px}#maisP #bVoltar{grid-column:span 2}
+  #maisP.on{display:grid;grid-template-columns:1fr 1fr}#maisP button{min-width:182px}
   /* avisos: abaixo do velocímetro; fala: acima das ações */
   #toast{top:clamp(74px,31vh,112px);font-size:clamp(15px,6.2vh,24px);max-width:56vw}
   #fala{left:50%;bottom:58px;top:auto;transform:translateX(-50%);width:min(430px,calc(100vw - 330px));min-width:230px;padding:6px 9px;font-size:11px;line-height:1.3;gap:8px}
@@ -148,7 +162,7 @@ body[data-modo=ped] #velo,body[data-modo=salto] #velo{display:none}
   #cena{bottom:30%}#cena b{font-size:clamp(20px,8vh,34px)}#cena span{font-size:9px}
   .cx{padding:12px 14px;max-height:calc(100dvh - 20px);box-shadow:.25em .25em 0 var(--sol)}.cx img{max-height:28vh;margin-bottom:6px}#cA{width:54px!important;height:54px}
   .cx h2{font-size:clamp(20px,8vh,34px)}#cQ{font-size:17px}.cx p{font-size:12px;margin:5px 0;line-height:1.4}#cO{font-size:11.5px;margin:5px 0}.bts{margin-top:8px;gap:6px}.bts button{min-height:40px}
-  #lista{width:min(260px,44vw);top:52px}#mTopo{padding:6px 10px}#mTopo button{min-height:38px}#sel{padding:10px 12px}#sel h3{font-size:20px}#sel p{font-size:11.5px}
+  #mTit{display:none}#mTopo b{font-size:16px;flex:1}#mTopo button{padding:6px 10px;font-size:10.5px}#lista{width:min(260px,44vw);top:52px}#mTopo{padding:6px 10px}#mTopo button{min-height:38px}#sel{padding:10px 12px}#sel h3{font-size:20px}#sel p{font-size:11.5px}
 }
 /* celular em pé: ações sobem para cima dos controles e o velocímetro vai para a direita */
 @media (pointer:coarse) and (orientation:portrait){
@@ -192,13 +206,13 @@ button,label{touch-action:manipulation}
   <canvas id="velo" width="220" height="220"></canvas>
   <div id="joy"><div id="knob"></div></div>
   <div id="pedais"><button id="pSobe">▲</button><button id="pDesce">▼</button><button id="pNitro">Nitro</button><button id="pFreio">Freio</button><button id="pGas">Acelera</button></div>
-  <div id="btns"><button id="bMapa">Mapa</button><button id="bAcao">Entrar</button><button id="bBuzina">Buzina</button><button id="bMais" aria-label="Mais opções">Mais</button><div id="maisP"><button id="bTroca">Jogar com Renata</button><button id="bFarol">Faróis</button><button id="bHora">Pôr do sol</button><button id="bSom">Som: ligado</button><button id="bVoltar">Voltar</button></div></div>
-  <div id="keys">W A S D: dirigir · Espaço: freio (avião: subir) · Shift ou X: nitro (avião: Shift desce, X turbo) · H: buzina · L: faróis · E: entrar em qualquer veículo, sair, saltar · C: trocar de personagem · M: mapa · N: hora · U: som</div>
+  <div id="btns"><button id="bMapa">Mapa</button><button id="bAcao">Entrar</button><button id="bBuzina">Buzina</button><button id="bMais" aria-label="Mais opções">Mais</button><div id="maisP"><button id="bTroca">Jogar com Renata</button><button id="bCam">Câmera</button><button id="bGar">Garagem</button><button id="bFarol">Faróis</button><button id="bHora">Pôr do sol</button><button id="bSom">Som: ligado</button><button id="bVoltar">Voltar</button></div></div>
+  <div id="keys">W A S D: dirigir · Espaço: freio (avião: subir) · Shift ou X: nitro (avião: Shift desce, X turbo) · H: buzina · L: faróis · E: entrar em qualquer veículo, sair, saltar · V: câmera · G: garagem · C: trocar de personagem · M: mapa · N: hora · U: som</div>
 </div>
 <div id="cartaz"><div class="cx"><img id="cImg" alt=""><img id="cA" alt=""><div class="k" id="cK"></div><h2 id="cT" class="disp retro"></h2><div id="cQ" class="script"></div><p id="cP"></p><div id="cO"></div><div id="cN"></div><div id="cB" class="bts"></div></div></div>
 <div id="mapa">
   <canvas id="mapc"></canvas>
-  <div id="mTopo"><b class="disp">Mapa de Oriximiná</b><span id="mTit"></span><button id="zMenos">−</button><button id="zMais">+</button><button id="zTudo">Ver aeroporto</button><button id="mFechar" class="pri">Fechar</button></div>
+  <div id="mTopo"><b class="disp">Mapa de Oriximiná</b><span id="mTit"></span><button id="zMenos">−</button><button id="zMais">+</button><button id="zTudo">Ver aeroporto</button><button id="mEu">Onde estou</button><button id="mFechar" class="pri">Fechar</button></div>
   <div id="lista"></div>
   <div id="sel"><div class="k" id="sK"></div><h3 id="sT" class="disp"></h3><p id="sP"></p><div id="sN"></div><div id="sB" class="bts"></div></div>
 </div>
