@@ -191,6 +191,22 @@ button,label{touch-action:manipulation}
 @media (prefers-reduced-motion:reduce){#gira .ic{animation:none}}
 #gira b,#perdeu b{font-family:'Anton',Impact,sans-serif;font-size:24px;letter-spacing:.05em;text-transform:uppercase}
 #gira button,#perdeu button{font:inherit;font-size:14px;color:var(--noite);background:var(--areia);border:0;border-radius:999px;padding:12px 22px;min-height:46px;cursor:pointer}
+
+/* tela inicial compacta no celular: cabe em telas baixas e não pesa enquanto digita */
+#cad .cl input{flex:1 1 140px}#cad .cl{flex-wrap:wrap}
+@media (pointer:coarse){
+  #title{padding:calc(10px + var(--st)) calc(12px + var(--sr)) calc(10px + var(--sb)) calc(12px + var(--sl))}
+  #title p,#title small{display:none}#title .k:first-child{display:none}
+  #title h1{font-size:clamp(34px,12vmin,64px)!important;line-height:.95}#title .s{font-size:clamp(20px,6vmin,34px)!important;margin-top:0}
+  #cad{margin-top:8px;padding:10px 12px;gap:7px;width:min(520px,94vw);border-radius:14px}
+  #cad .ct{font-size:15px}#cad .ck{font-size:11px;line-height:1.35}#cErro{min-height:0;font-size:12px}#cErro:empty{display:none}
+  #cad input:not([type=checkbox]){min-height:44px;padding:9px 11px}
+  #cEnviar{font-size:17px;min-height:46px}
+  #ola{margin-top:6px}#pass{font-size:11px}#title .pl{margin-top:10px;gap:10px}#play,#playD{font-size:clamp(15px,4.6vmin,22px)!important}
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:500px){#title h1{font-size:clamp(28px,11vh,48px)!important}#title .s{font-size:clamp(16px,6vh,24px)!important}#cad .ct{display:none}#title .pl{flex-direction:row}}
+body.digitando #title h1,body.digitando #title .s{display:none}
+@media (pointer:coarse) and (orientation:portrait){#cad .cl input{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -226,9 +242,8 @@ button,label{touch-action:manipulation}
   <p>Dirija nove carros pelas ruas reais da cidade, pilote a lancha e o iate no rio Trombetas, decole do aeroporto e salte de paraquedas sobre a orla. Vença os desafiantes e complete o álbum de cartões-postais.</p>
   <form id="cad" novalidate>
     <div class="ct">Pré-cadastro para jogar</div>
-    <div class="cl"><input id="cNome" autocomplete="given-name" maxlength="40" placeholder="Nome"><input id="cSobre" autocomplete="family-name" maxlength="40" placeholder="Sobrenome"></div>
-    <input id="cTel" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="15" placeholder="Telefone com DDD">
-    <label class="ck"><input id="cOk" type="checkbox"><span>Autorizo o envio do meu nome e telefone ao organizador do jogo (Diário de Leonida) para contato. Nenhum outro jogador vê estes dados. Menor de 18 anos: peça a um responsável para preencher.</span></label>
+    <div class="cl"><input id="cNome" autocomplete="name" autocapitalize="words" enterkeyhint="next" maxlength="60" placeholder="Nome e sobrenome"><input id="cTel" type="tel" inputmode="numeric" autocomplete="tel-national" enterkeyhint="done" maxlength="15" placeholder="Celular com DDD"></div>
+    <label class="ck"><input id="cOk" type="checkbox"><span>Autorizo enviar meu nome e celular ao Diário de Leonida. Só o organizador vê. Menor de 18: um responsável preenche.</span></label>
     <div id="cErro" role="alert"></div>
     <button id="cEnviar" type="submit">Cadastrar e jogar</button>
   </form>

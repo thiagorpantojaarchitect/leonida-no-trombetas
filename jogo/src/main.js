@@ -717,8 +717,11 @@ function telaCadastro() {
   if (PF.P) { $('ola').textContent = 'Olá, ' + PF.P.nome + '!'; passaporte(); }
 }
 { const t = $('cTel'); t.addEventListener('input', () => { t.value = PF.mascara(t.value); });
-  $('cad').addEventListener('submit', ev => { ev.preventDefault(); const er = PF.validar($('cNome').value, $('cSobre').value, t.value, $('cOk').checked); $('cErro').textContent = er; if (er) return; PF.criar($('cNome').value, $('cSobre').value, t.value); telaCadastro(); });
-  for (const id of ['cNome', 'cSobre', 'cTel']) $(id).addEventListener('keydown', ev => ev.stopPropagation());
+  const partes = () => { const n = $('cNome').value.trim().replace(/\s+/g, ' '), i = n.indexOf(' '); return i < 0 ? [n, ''] : [n.slice(0, i), n.slice(i + 1)]; };
+  $('cad').addEventListener('submit', ev => { ev.preventDefault(); document.activeElement && document.activeElement.blur(); const [n, sb] = partes(); let er = n && !sb ? 'Escreva nome e sobrenome.' : PF.validar(n, sb, t.value, $('cOk').checked); if (er === 'Escreva seu nome.') er = 'Escreva nome e sobrenome.'; $('cErro').textContent = er; if (er) return; PF.criar(n, sb, t.value); telaCadastro(); });
+  for (const id of ['cNome', 'cTel']) { const el = $(id); el.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter' && id === 'cNome') { ev.preventDefault(); t.focus(); } });
+    el.addEventListener('focus', () => { document.body.classList.add('digitando'); setTimeout(() => { try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }, 300); });
+    el.addEventListener('blur', () => setTimeout(() => { if (!/^(INPUT)$/.test((document.activeElement || {}).tagName)) document.body.classList.remove('digitando'); }, 50)); }
   telaCadastro(); }
 function start() { if (started) return; if (!PF.P && !SEM_CADASTRO) return telaCadastro(); started = true; if (window.__verGira) window.__verGira(); try { const o = screen.orientation; if (o && o.lock) o.lock('landscape').catch(() => {}); } catch (e) {} { const a = PF.acesso(); passaporte(); if (a && a.ganho) setTimeout(() => toast('+' + a.ganho + ' pontos pelo acesso de hoje' + (a.seq > 1 ? ' · ' + a.seq + ' dias seguidos' : ''), 3.2), 7000); } somIniciar(); $('title').classList.add('off'); $('hud').classList.add('on'); refazerMarcas(); hudFase(); if (has('auto')) { cur = car; pedM.visible = false; } else cut = { t: 0, x0: ped.x, z0: ped.z }; }
 $('play').onclick = () => { trocarPersonagem('prefeito'); start(); }; $('playD').onclick = () => { trocarPersonagem('dama'); start(); };
@@ -1134,8 +1137,11 @@ if (has('foto')) { $('title').style.display = 'none'; }
 if (has('toque')) for (const folha of document.styleSheets) { try { for (const r of folha.cssRules) if (r.media && r.media.mediaText.includes('pointer')) r.media.mediaText = r.media.mediaText.replace(/\(pointer:\s*coarse\)/g, 'all'); } catch (e) {} }
 camera.position.set(car.x, 60, car.z);
 let nFr = 0;
+let acTit = 1; const TOQUE = matchMedia('(pointer:coarse)').matches;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!started && TOQUE) { // tela inicial no celular: cena de fundo a ~12 quadros por segundo e parada enquanto o teclado está aberto
+    acTit += dt; if (document.body.classList.contains('digitando') || acTit < 1 / 12) { requestAnimationFrame(frame); return; } acTit = 0; }
   const t0 = performance.now(); step(dt); extrasPasso(dt); const t1 = performance.now(); renderer.render(scene, camera); if (started) { drawMini(); drawVelo(); } if (has('log') && (nFr++ < 4)) console.log('F', nFr, Math.round(t1 - t0), Math.round(performance.now() - t1), renderer.info.render.calls, renderer.info.render.triangles);
   requestAnimationFrame(frame);
 }
